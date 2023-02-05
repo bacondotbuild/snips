@@ -1,0 +1,8 @@
+{
+  "name": "shnippets",
+  "short_name": "shnippets",
+  "lang": "en-US",
+  "start_url": "/",
+  "display": "standalone",
+  "scope": "/"
+}
