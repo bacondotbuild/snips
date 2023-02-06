@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { type NextPage } from 'next'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import {
@@ -5,6 +6,7 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
   DocumentDuplicateIcon,
+  TrashIcon,
 } from '@heroicons/react/24/solid'
 
 import Button from '@/components/design/button'
@@ -15,10 +17,14 @@ import useForm from '@/lib/useForm'
 import { useRouter } from 'next/router'
 import { Snippet } from '@prisma/client'
 import copyToClipboard from '@/lib/copyToClipboard'
+import Modal from '@/components/modal'
+import Footer, { FooterListItem } from '@/components/design/footer'
 
 const Snippet: NextPage = () => {
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const {
     query: { id },
+    push,
   } = useRouter()
   const { data: session } = useSession()
 
@@ -51,6 +57,8 @@ const Snippet: NextPage = () => {
       await utils.snippets.get.invalidate()
     },
   })
+
+  const { mutate: deleteNote } = api.snippets.delete.useMutation()
 
   const { values, handleChange, handleSubmit, isSubmitting, dirty } = useForm({
     initialValues: {
@@ -112,23 +120,6 @@ const Snippet: NextPage = () => {
                   value={snippet}
                   onChange={handleChange}
                 />
-                <Button
-                  className='disabled:pointer-events-none disabled:opacity-25'
-                  onClick={() => {
-                    copyToClipboard(snippet as string)
-                  }}
-                  disabled={!snippet}
-                >
-                  <DocumentDuplicateIcon className='mx-auto block h-6 w-6' />
-                </Button>
-                <Button
-                  className='disabled:pointer-events-none disabled:opacity-25'
-                  type='submit'
-                  onClick={handleSubmit}
-                  disabled={!dirty || isSubmitting}
-                >
-                  <ArrowDownOnSquareIcon className='mx-auto block h-6 w-6' />
-                </Button>
               </form>
             </>
           ) : (
@@ -136,6 +127,49 @@ const Snippet: NextPage = () => {
           )}
         </div>
       </Main>
+      {session && (
+        <>
+          <Footer>
+            <FooterListItem onClick={() => setIsConfirmModalOpen(true)}>
+              <TrashIcon className='h-6 w-6 text-red-600' />
+            </FooterListItem>
+            <FooterListItem onClick={() => copyToClipboard(snippet as string)}>
+              <DocumentDuplicateIcon className='h-6 w-6' />
+            </FooterListItem>
+
+            <FooterListItem
+              className='disabled:pointer-events-none disabled:opacity-25'
+              onClick={handleSubmit}
+              disabled={!dirty || isSubmitting}
+            >
+              <ArrowDownOnSquareIcon className='h-6 w-6' />
+            </FooterListItem>
+          </Footer>
+          <Modal
+            isOpen={isConfirmModalOpen}
+            setIsOpen={setIsConfirmModalOpen}
+            title='are you sure you want to delete?'
+          >
+            <div className='flex space-x-4'>
+              <Button
+                onClick={() => {
+                  deleteNote({ id: id as string })
+                  push('/').catch(err => console.log(err))
+                }}
+              >
+                yes
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsConfirmModalOpen(false)
+                }}
+              >
+                no
+              </Button>
+            </div>
+          </Modal>
+        </>
+      )}
     </Page>
   )
 }

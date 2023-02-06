@@ -1,4 +1,5 @@
 import type { MouseEventHandler } from 'react'
+import classnames from 'classnames'
 
 export default function Footer({ children }: { children?: React.ReactNode }) {
   return (
@@ -12,18 +13,23 @@ export default function Footer({ children }: { children?: React.ReactNode }) {
 
 export function FooterListItem({
   onClick,
+  disabled,
+  className,
   children,
 }: {
   onClick?: MouseEventHandler<HTMLButtonElement>
+  disabled?: boolean
+  className?: string
   children?: React.ReactNode
 }) {
   return (
     <li className='flex-grow'>
       {onClick ? (
         <button
-          className='flex w-full justify-center py-2'
+          className={classnames('flex w-full justify-center py-2', className)}
           type='button'
           onClick={onClick}
+          disabled={disabled}
         >
           {children}
         </button>

@@ -71,13 +71,26 @@ export const snippetsRouter = createTRPCRouter({
     }),
   delete: protectedProcedure
     .input(
-      z
-        .object({
-          id: z.string().nullish(),
-        })
-        .nullish()
+      z.object({
+        id: z.string(),
+      })
     )
     .mutation(async ({ ctx, input }) => {
+      const currentUser = ctx.session.user.name
+
+      const noteToBeUpdated = await ctx.prisma.snippet.findFirst({
+        where: {
+          id: input.id ?? '',
+        },
+        select: {
+          author: true,
+        },
+      })
+
+      if (input.id && noteToBeUpdated?.author !== currentUser) {
+        return null
+      }
+
       try {
         return await ctx.prisma.snippet.delete({
           where: {
