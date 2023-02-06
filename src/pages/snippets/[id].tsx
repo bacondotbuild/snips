@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { type NextPage } from 'next'
-import { signIn, signOut, useSession } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import {
   ArrowDownOnSquareIcon,
-  ArrowLeftOnRectangleIcon,
-  ArrowRightOnRectangleIcon,
   DocumentDuplicateIcon,
   TrashIcon,
 } from '@heroicons/react/24/solid'
@@ -12,13 +10,13 @@ import {
 import Button from '@/components/design/button'
 import Main from '@/components/design/main'
 import Page from '@/components/page'
+import Modal from '@/components/modal'
+import Footer, { FooterListItem } from '@/components/design/footer'
 import { api } from '@/lib/api'
 import useForm from '@/lib/useForm'
 import { useRouter } from 'next/router'
 import { Snippet } from '@prisma/client'
 import copyToClipboard from '@/lib/copyToClipboard'
-import Modal from '@/components/modal'
-import Footer, { FooterListItem } from '@/components/design/footer'
 
 const Snippet: NextPage = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
@@ -81,51 +79,27 @@ const Snippet: NextPage = () => {
   return (
     <Page>
       <Main className='flex flex-col p-4'>
-        <div className='flex flex-grow flex-col items-center justify-center space-y-4'>
-          {session ? (
-            <>
-              <p>hi {session.user?.name}</p>
-              <Button
-                onClick={() => {
-                  signOut().catch(err => console.log(err))
-                }}
-              >
-                <ArrowLeftOnRectangleIcon className='h-6 w-6' />
-              </Button>
-            </>
-          ) : (
-            <Button
-              onClick={() => {
-                signIn('discord').catch(err => console.log(err))
-              }}
-            >
-              <ArrowRightOnRectangleIcon className='h-6 w-6' />
-            </Button>
-          )}
-          {session ? (
-            <>
-              <form className='space-y-3'>
-                <input
-                  className='w-full bg-cobalt'
-                  type='text'
-                  name='name'
-                  placeholder='name'
-                  value={name}
-                  onChange={handleChange}
-                />
-                <textarea
-                  className='w-full bg-cobalt'
-                  name='snippet'
-                  placeholder='snippet'
-                  value={snippet}
-                  onChange={handleChange}
-                />
-              </form>
-            </>
-          ) : (
-            <p>sign in to create/view your snippets!</p>
-          )}
-        </div>
+        {session ? (
+          <form className='flex flex-grow flex-col space-y-3'>
+            <input
+              className='w-full bg-cobalt'
+              type='text'
+              name='name'
+              placeholder='name'
+              value={name}
+              onChange={handleChange}
+            />
+            <textarea
+              className='h-full w-full flex-grow bg-cobalt'
+              name='snippet'
+              placeholder='snippet'
+              value={snippet}
+              onChange={handleChange}
+            />
+          </form>
+        ) : (
+          <p>sign in to create/view your snippets!</p>
+        )}
       </Main>
       {session && (
         <>
