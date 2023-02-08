@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import type { ChangeEvent } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { type NextPage } from 'next'
 import { useSession } from 'next-auth/react'
+import type { TextReplacement } from '@prisma/client'
+import { Snippet } from '@prisma/client'
 import {
   ArrowDownOnSquareIcon,
   DocumentDuplicateIcon,
+  PlusIcon,
   TrashIcon,
+  VariableIcon,
 } from '@heroicons/react/24/solid'
 
 import Button from '@/components/design/button'
@@ -14,11 +20,63 @@ import Modal from '@/components/modal'
 import Footer, { FooterListItem } from '@/components/design/footer'
 import { api } from '@/lib/api'
 import useForm from '@/lib/useForm'
-import { useRouter } from 'next/router'
-import { Snippet } from '@prisma/client'
 import copyToClipboard from '@/lib/copyToClipboard'
 
+function arrayEquals(a: unknown, b: unknown) {
+  const isEqual =
+    Array.isArray(a) &&
+    Array.isArray(b) &&
+    a.length === b.length &&
+    a.every((val, index) => JSON.stringify(val) === JSON.stringify(b[index]))
+  return isEqual
+}
+
+const TextReplacementListItem = ({
+  index,
+  textReplacement,
+  textReplacements,
+  setTextReplacements,
+}: {
+  index: number
+  textReplacement: TextReplacement
+  textReplacements: TextReplacement[]
+  setTextReplacements: (textReplacements: TextReplacement[]) => void
+}) => {
+  const { variable, text } = textReplacement
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.currentTarget
+    const newTextReplacement = {
+      ...textReplacement,
+      [name]: value,
+    }
+    const newTextReplacements = [...textReplacements]
+    newTextReplacements[index] = newTextReplacement
+    setTextReplacements(newTextReplacements)
+  }
+  return (
+    <li className='space-y-2'>
+      <input
+        className='w-full bg-cobalt'
+        type='text'
+        name='variable'
+        value={variable}
+        onChange={handleChange}
+      />
+      <textarea
+        className='w-full bg-cobalt'
+        name='text'
+        value={text}
+        onChange={handleChange}
+      />
+    </li>
+  )
+}
+
 const Snippet: NextPage = () => {
+  const [isTextReplacementModalOpen, setIsTextReplacementModalOpen] =
+    useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const {
     query: { id },
@@ -27,6 +85,12 @@ const Snippet: NextPage = () => {
   const { data: session } = useSession()
 
   const { data: savedSnippet } = api.snippets.get.useQuery({ id: id as string })
+  const [textReplacements, setTextReplacements] = useState<TextReplacement[]>(
+    savedSnippet?.textReplacements ?? []
+  )
+  useEffect(() => {
+    setTextReplacements(savedSnippet?.textReplacements as TextReplacement[])
+  }, [savedSnippet])
   const utils = api.useContext()
   const { mutate: updateSnippet } = api.snippets.save.useMutation({
     // https://create.t3.gg/en/usage/trpc#optimistic-updates
@@ -40,7 +104,7 @@ const Snippet: NextPage = () => {
       // Optimistically update the data with our new post
       utils.snippets.get.setData(
         { id: id as string },
-        () => newSnippet as Snippet
+        () => newSnippet as Snippet & { textReplacements: TextReplacement[] }
       )
 
       // Return the previous data so we can revert if something goes wrong
@@ -107,7 +171,23 @@ const Snippet: NextPage = () => {
             <FooterListItem onClick={() => setIsConfirmModalOpen(true)}>
               <TrashIcon className='h-6 w-6 text-red-600' />
             </FooterListItem>
-            <FooterListItem onClick={() => copyToClipboard(snippet as string)}>
+
+            <FooterListItem onClick={() => setIsTextReplacementModalOpen(true)}>
+              <VariableIcon className='h-6 w-6' />
+            </FooterListItem>
+
+            <FooterListItem
+              onClick={() => {
+                const copy =
+                  textReplacements?.length > 0
+                    ? textReplacements.reduce((prev, textReplacement) => {
+                        const { variable, text } = textReplacement
+                        return prev?.replace(variable, text)
+                      }, savedSnippet?.snippet)
+                    : savedSnippet?.snippet
+                copyToClipboard(copy as string)
+              }}
+            >
               <DocumentDuplicateIcon className='h-6 w-6' />
             </FooterListItem>
 
@@ -141,6 +221,60 @@ const Snippet: NextPage = () => {
                 no
               </Button>
             </div>
+          </Modal>
+          <Modal
+            isOpen={isTextReplacementModalOpen}
+            setIsOpen={setIsTextReplacementModalOpen}
+            title='text replacements'
+          >
+            {textReplacements?.length > 0 ? (
+              <ul className='space-y-3'>
+                {textReplacements.map((textReplacement, index) => (
+                  <TextReplacementListItem
+                    key={index}
+                    index={index}
+                    textReplacement={textReplacement}
+                    textReplacements={textReplacements}
+                    setTextReplacements={setTextReplacements}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <p>you have no text replacements</p>
+            )}
+            <Button
+              onClick={() => {
+                setTextReplacements([
+                  ...textReplacements,
+                  {
+                    id: '',
+                    variable: '',
+                    text: '',
+                    snippetId: id as string,
+                  },
+                ])
+              }}
+            >
+              <PlusIcon className='mx-auto block h-6 w-6' />
+            </Button>
+            <Button
+              className='disabled:pointer-events-none disabled:opacity-25'
+              onClick={() => {
+                updateSnippet({
+                  id: id as string,
+                  name: name as string,
+                  snippet: snippet as string,
+                  author: session?.user?.name as string,
+                  textReplacements,
+                })
+              }}
+              disabled={arrayEquals(
+                textReplacements,
+                savedSnippet?.textReplacements
+              )}
+            >
+              <ArrowDownOnSquareIcon className='mx-auto block h-6 w-6' />
+            </Button>
           </Modal>
         </>
       )}

@@ -59,10 +59,18 @@ model VerificationToken {
     @@unique([identifier, token])
 }
 
+model TextReplacement {
+    id          String    @id @default(cuid())
+    variable    String
+    text        String
+    snippetId   String
+    snippet     Snippet @relation(fields: [snippetId], references: [id])
+}
+
 model Snippet {
-    id      String    @id @default(cuid())
-    name    String
-    snippet String
-    author  String
-    // textReplacements
+    id                String    @id @default(cuid())
+    name              String
+    snippet           String
+    author            String
+    textReplacements  TextReplacement[]
 }

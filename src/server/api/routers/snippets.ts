@@ -15,6 +15,9 @@ export const snippetsRouter = createTRPCRouter({
           where: {
             id: input.id,
           },
+          include: {
+            textReplacements: true,
+          },
         })
       } catch (error) {
         console.log(error)
@@ -44,12 +47,22 @@ export const snippetsRouter = createTRPCRouter({
         name: z.string().nullish(),
         snippet: z.string().nullish(),
         author: z.string(),
+        textReplacements: z
+          .array(
+            z.object({
+              id: z.string().nullish(),
+              variable: z.string(),
+              text: z.string(),
+            })
+          )
+          .nullish(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const name = input.name ?? 'untitled'
       const snippet = input.snippet ?? 'snippet'
       const author = input.author
+      const textReplacements = input.textReplacements ?? []
 
       const newSnippet = {
         name,
@@ -58,13 +71,35 @@ export const snippetsRouter = createTRPCRouter({
       }
 
       try {
-        return await ctx.prisma.snippet.upsert({
+        const snippetResult = await ctx.prisma.snippet.upsert({
           where: {
             id: input.id ?? '',
           },
           update: newSnippet,
           create: newSnippet,
         })
+
+        const textReplacementsResult = await ctx.prisma.$transaction(
+          textReplacements.map(textReplacement =>
+            ctx.prisma.textReplacement.upsert({
+              where: {
+                id: textReplacement.id ?? '',
+              },
+              update: {
+                variable: textReplacement.variable,
+                text: textReplacement.text,
+                snippetId: snippetResult.id,
+              },
+              create: {
+                variable: textReplacement.variable,
+                text: textReplacement.text,
+                snippetId: snippetResult.id,
+              },
+            })
+          )
+        )
+
+        return { ...snippetResult, textReplacements: textReplacementsResult }
       } catch (error) {
         console.log(error)
       }
