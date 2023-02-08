@@ -182,7 +182,7 @@ const Snippet: NextPage = () => {
                   textReplacements?.length > 0
                     ? textReplacements.reduce((prev, textReplacement) => {
                         const { variable, text } = textReplacement
-                        return prev?.replace(variable, text)
+                        return prev?.replaceAll(variable, text)
                       }, savedSnippet?.snippet)
                     : savedSnippet?.snippet
                 copyToClipboard(copy as string)
