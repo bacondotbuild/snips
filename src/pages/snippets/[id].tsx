@@ -21,6 +21,15 @@ import Footer, { FooterListItem } from '@/components/design/footer'
 import { api } from '@/lib/api'
 import useForm from '@/lib/useForm'
 import copyToClipboard from '@/lib/copyToClipboard'
+import format from 'date-fns/format'
+// import nextDay from 'date-fns/nextDay'
+import nextMonday from 'date-fns/nextMonday'
+import nextTuesday from 'date-fns/nextTuesday'
+import nextWednesday from 'date-fns/nextWednesday'
+import nextThursday from 'date-fns/nextThursday'
+import nextFriday from 'date-fns/nextFriday'
+import nextSaturday from 'date-fns/nextSaturday'
+import nextSunday from 'date-fns/nextSunday'
 
 function arrayEquals(a: unknown, b: unknown) {
   const isEqual =
@@ -30,6 +39,37 @@ function arrayEquals(a: unknown, b: unknown) {
     a.every((val, index) => JSON.stringify(val) === JSON.stringify(b[index]))
   return isEqual
 }
+
+const textTypes = ['text', 'date'] as const
+type TextType = (typeof textTypes)[number]
+
+const dateTextFns = {
+  today: (date: Date): string => format(date, 'eee MMM d yyyy'),
+  // tomorrow: (date: Date) => format(nextDay(date), 'eee MMM d yyyy'),
+  'next mon': (date: Date) => format(nextMonday(date), 'eee MMM d yyyy'),
+  'next tue': (date: Date) => format(nextTuesday(date), 'eee MMM d yyyy'),
+  'next wed': (date: Date) => format(nextWednesday(date), 'eee MMM d yyyy'),
+  'next thu': (date: Date) => format(nextThursday(date), 'eee MMM d yyyy'),
+  'next fri': (date: Date) => format(nextFriday(date), 'eee MMM d yyyy'),
+  'next sat': (date: Date) => format(nextSaturday(date), 'eee MMM d yyyy'),
+  'next sun': (date: Date) => format(nextSunday(date), 'eee MMM d yyyy'),
+}
+
+const dateTextOptions = [
+  'today',
+  // 'tomorrow',
+  'next mon',
+  'next tue',
+  'next wed',
+  'next thu',
+  'next fri',
+  'next sat',
+  'next sun',
+] as const
+
+type DateTextOption = (typeof dateTextOptions)[number]
+const isDateTextOption = (text: string): text is DateTextOption =>
+  dateTextOptions.indexOf(text as DateTextOption) !== -1
 
 const TextReplacementListItem = ({
   index,
@@ -43,8 +83,11 @@ const TextReplacementListItem = ({
   setTextReplacements: (textReplacements: TextReplacement[]) => void
 }) => {
   const { variable, text } = textReplacement
+  const [selectedTextType, setSelectedTextType] = useState<TextType>(() =>
+    isDateTextOption(text) ? 'date' : 'text'
+  )
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.currentTarget
     const newTextReplacement = {
@@ -64,12 +107,39 @@ const TextReplacementListItem = ({
         value={variable}
         onChange={handleChange}
       />
-      <textarea
+      <select
         className='w-full bg-cobalt'
-        name='text'
-        value={text}
-        onChange={handleChange}
-      />
+        value={selectedTextType}
+        onChange={e => setSelectedTextType(e.target.value as TextType)}
+      >
+        {textTypes.map(textType => (
+          <option key={textType} value={textType}>
+            {textType}
+          </option>
+        ))}
+      </select>
+      {selectedTextType === 'date' ? (
+        <select
+          className='w-full bg-cobalt'
+          name='text'
+          value={text}
+          onChange={handleChange}
+        >
+          <option>select date text option</option>
+          {dateTextOptions.map(dateTextOption => (
+            <option key={dateTextOption} value={dateTextOption}>
+              {dateTextOption}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <textarea
+          className='w-full bg-cobalt'
+          name='text'
+          value={text}
+          onChange={handleChange}
+        />
+      )}
     </li>
   )
 }
@@ -182,7 +252,11 @@ const Snippet: NextPage = () => {
                   textReplacements?.length > 0
                     ? textReplacements.reduce((prev, textReplacement) => {
                         const { variable, text } = textReplacement
-                        return prev?.replaceAll(variable, text)
+                        const now = new Date()
+                        const replaceText = isDateTextOption(text)
+                          ? dateTextFns[text](now)
+                          : text
+                        return prev?.replaceAll(variable, replaceText)
                       }, savedSnippet?.snippet)
                     : savedSnippet?.snippet
                 copyToClipboard(copy as string)
