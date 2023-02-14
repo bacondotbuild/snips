@@ -12,15 +12,6 @@ import {
   TrashIcon,
   VariableIcon,
 } from '@heroicons/react/24/solid'
-
-import Button from '@/components/design/button'
-import Main from '@/components/design/main'
-import Page from '@/components/page'
-import Modal from '@/components/modal'
-import Footer, { FooterListItem } from '@/components/design/footer'
-import { api } from '@/lib/api'
-import useForm from '@/lib/useForm'
-import copyToClipboard from '@/lib/copyToClipboard'
 import format from 'date-fns/format'
 // import nextDay from 'date-fns/nextDay'
 import nextMonday from 'date-fns/nextMonday'
@@ -30,6 +21,16 @@ import nextThursday from 'date-fns/nextThursday'
 import nextFriday from 'date-fns/nextFriday'
 import nextSaturday from 'date-fns/nextSaturday'
 import nextSunday from 'date-fns/nextSunday'
+import { toast } from 'react-toastify'
+
+import Button from '@/components/design/button'
+import Main from '@/components/design/main'
+import Page from '@/components/page'
+import Modal from '@/components/modal'
+import Footer, { FooterListItem } from '@/components/design/footer'
+import { api } from '@/lib/api'
+import useForm from '@/lib/useForm'
+import copyToClipboard from '@/lib/copyToClipboard'
 
 function arrayEquals(a: unknown, b: unknown) {
   const isEqual =
@@ -260,6 +261,7 @@ const Snippet: NextPage = () => {
                       }, savedSnippet?.snippet)
                     : savedSnippet?.snippet
                 copyToClipboard(copy as string)
+                toast.success('copied to clipboard')
               }}
             >
               <DocumentDuplicateIcon className='h-6 w-6' />

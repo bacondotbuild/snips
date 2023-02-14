@@ -1,5 +1,6 @@
 import Meta from '@/components/meta'
 import Header from '@/components/header'
+import Notification from '@/components/notification'
 
 const DEFAULT_TITLE = 'shnippets'
 
@@ -14,6 +15,7 @@ const Page = ({
     <Meta
       title={title === DEFAULT_TITLE ? title : `${title} - ${DEFAULT_TITLE}`}
     />
+    <Notification />
     <Header title={DEFAULT_TITLE} />
     {children}
   </div>
