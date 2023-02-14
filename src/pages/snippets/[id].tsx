@@ -44,7 +44,7 @@ const textTypes = ['text', 'date'] as const
 type TextType = (typeof textTypes)[number]
 
 const dateTextFns = {
-  today: (date: Date): string => format(date, 'eee MMM d yyyy'),
+  today: (date: Date) => format(date, 'eee MMM d yyyy'),
   // tomorrow: (date: Date) => format(nextDay(date), 'eee MMM d yyyy'),
   'next mon': (date: Date) => format(nextMonday(date), 'eee MMM d yyyy'),
   'next tue': (date: Date) => format(nextTuesday(date), 'eee MMM d yyyy'),
