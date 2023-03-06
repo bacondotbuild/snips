@@ -31,6 +31,7 @@ export default function Modal({
           <div className='fixed inset-0 bg-cobalt/90' />
         </Transition.Child>
         <Transition.Child
+          className='h-full'
           enter='duration-300 ease-out'
           enterFrom='opacity-0 scale-95'
           enterTo='opacity-100 scale-100'
