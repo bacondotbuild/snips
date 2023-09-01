@@ -8,6 +8,8 @@ import { Snippet } from '@prisma/client'
 import {
   ArrowDownOnSquareIcon,
   DocumentDuplicateIcon,
+  DocumentMagnifyingGlassIcon,
+  PencilSquareIcon,
   PlusIcon,
   TrashIcon,
   VariableIcon,
@@ -146,6 +148,7 @@ const TextReplacementListItem = ({
 }
 
 const Snippet: NextPage = () => {
+  const [showPreview, setShowPreview] = useState(false)
   const [isTextReplacementModalOpen, setIsTextReplacementModalOpen] =
     useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
@@ -211,6 +214,17 @@ const Snippet: NextPage = () => {
 
   const { name, snippet } = values
 
+  const snippetWithReplacements =
+    textReplacements?.length > 0
+      ? textReplacements.reduce((prev, textReplacement) => {
+          const { variable, text } = textReplacement
+          const now = new Date()
+          const replaceText = isDateTextOption(text)
+            ? dateTextFns[text](now)
+            : text
+          return prev?.replaceAll(variable, replaceText)
+        }, savedSnippet?.snippet)
+      : savedSnippet?.snippet
   return (
     <Page>
       <Main className='flex flex-col p-4'>
@@ -228,8 +242,9 @@ const Snippet: NextPage = () => {
               className='h-full w-full flex-grow bg-cobalt'
               name='snippet'
               placeholder='snippet'
-              value={snippet}
+              value={showPreview ? snippetWithReplacements : snippet}
               onChange={handleChange}
+              readOnly={showPreview}
             />
           </form>
         ) : (
@@ -247,20 +262,17 @@ const Snippet: NextPage = () => {
               <VariableIcon className='h-6 w-6' />
             </FooterListItem>
 
+            <FooterListItem onClick={() => setShowPreview(!showPreview)}>
+              {showPreview ? (
+                <PencilSquareIcon className='h-6 w-6' />
+              ) : (
+                <DocumentMagnifyingGlassIcon className='h-6 w-6' />
+              )}
+            </FooterListItem>
+
             <FooterListItem
               onClick={() => {
-                const copy =
-                  textReplacements?.length > 0
-                    ? textReplacements.reduce((prev, textReplacement) => {
-                        const { variable, text } = textReplacement
-                        const now = new Date()
-                        const replaceText = isDateTextOption(text)
-                          ? dateTextFns[text](now)
-                          : text
-                        return prev?.replaceAll(variable, replaceText)
-                      }, savedSnippet?.snippet)
-                    : savedSnippet?.snippet
-                copyToClipboard(copy as string)
+                copyToClipboard(snippetWithReplacements as string)
                 toast.success('copied to clipboard')
               }}
             >
