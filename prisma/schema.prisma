@@ -73,4 +73,6 @@ model Snippet {
     snippet           String
     author            String
     textReplacements  TextReplacement[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 }

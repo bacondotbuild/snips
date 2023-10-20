@@ -35,6 +35,11 @@ export const snippetsRouter = createTRPCRouter({
           where: {
             author: input.author,
           },
+          orderBy: [
+            {
+              updatedAt: 'desc',
+            },
+          ],
         })
       } catch (error) {
         console.log(error)
