@@ -4,6 +4,7 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/solid'
+import format from 'date-fns/format'
 
 import Button from '@/components/design/button'
 import Main from '@/components/design/main'
@@ -54,10 +55,13 @@ const Home: NextPage = () => {
                   {snippets.map(snippet => (
                     <li key={snippet.id}>
                       <Link
-                        className='text-cb-pink hover:underline'
+                        className='flex items-center space-x-4 text-cb-pink hover:underline'
                         href={`/snippets/${snippet.id}`}
                       >
-                        {snippet.name}
+                        <span>{snippet.name}</span>
+                        <span className='text-xs text-cb-white'>
+                          {format(snippet.updatedAt, 'eee MMM d yyyy')}
+                        </span>
                       </Link>
                     </li>
                   ))}
