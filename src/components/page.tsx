@@ -2,7 +2,7 @@ import Meta from '@/components/meta'
 import Header from '@/components/header'
 import Notification from '@/components/notification'
 
-const DEFAULT_TITLE = 'shnippets'
+const DEFAULT_TITLE = 'snips'
 
 const Page = ({
   title = DEFAULT_TITLE,

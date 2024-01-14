@@ -1,6 +1,6 @@
 {
-  "name": "shnippets",
-  "short_name": "shnippets",
+  "name": "snips",
+  "short_name": "snips",
   "lang": "en-US",
   "start_url": "/",
   "display": "standalone",
