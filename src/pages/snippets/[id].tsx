@@ -87,6 +87,7 @@ const TextReplacementListItem = ({
   textReplacements: TextReplacement[]
   setTextReplacements: (textReplacements: TextReplacement[]) => void
 }) => {
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const { variable, text } = textReplacement
   const [selectedTextType, setSelectedTextType] = useState<TextType>(() =>
     isDateTextOption(text) ? 'date' : 'text'
@@ -163,10 +164,43 @@ const TextReplacementListItem = ({
                   onChange={handleChange}
                 />
               )}
+              <Button
+                onClick={() => {
+                  setIsConfirmModalOpen(true)
+                }}
+                backgroundColorClassName='bg-red-600'
+              >
+                <TrashIcon className='mx-auto block h-6 w-6' />
+              </Button>
             </Disclosure.Panel>
           </>
         )}
       </Disclosure>
+      <Modal
+        isOpen={isConfirmModalOpen}
+        setIsOpen={setIsConfirmModalOpen}
+        title='are you sure you want to delete?'
+      >
+        <div className='flex space-x-4'>
+          <Button
+            onClick={() => {
+              const newTextReplacements = [...textReplacements]
+              // delete item by index
+              newTextReplacements.splice(index, 1)
+              setTextReplacements(newTextReplacements)
+            }}
+          >
+            yes
+          </Button>
+          <Button
+            onClick={() => {
+              setIsConfirmModalOpen(false)
+            }}
+          >
+            no
+          </Button>
+        </div>
+      </Modal>
     </li>
   )
 }
