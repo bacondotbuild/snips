@@ -303,7 +303,7 @@ export default function Snippet() {
   )
   useEffect(() => {
     setTextReplacements(savedSnippet?.textReplacements as TextReplacement[])
-  }, [savedSnippet])
+  }, [savedSnippet?.textReplacements])
   const utils = api.useContext()
   const { mutate: updateSnippet } = api.snippets.save.useMutation({
     // https://create.t3.gg/en/usage/trpc#optimistic-updates
