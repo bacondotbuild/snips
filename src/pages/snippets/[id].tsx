@@ -1,12 +1,12 @@
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { type NextPage } from 'next'
 import { useSession } from 'next-auth/react'
 import type { TextReplacement } from '@prisma/client'
-import { Snippet } from '@prisma/client'
+import type { Snippet } from '@prisma/client'
 import {
   ArrowDownOnSquareIcon,
+  ChevronRightIcon,
   DocumentDuplicateIcon,
   DocumentMagnifyingGlassIcon,
   PencilSquareIcon,
@@ -24,6 +24,8 @@ import nextFriday from 'date-fns/nextFriday'
 import nextSaturday from 'date-fns/nextSaturday'
 import nextSunday from 'date-fns/nextSunday'
 import { toast } from 'react-toastify'
+import { Disclosure } from '@headlessui/react'
+import classNames from 'classnames'
 
 import Button from '@/components/design/button'
 import Main from '@/components/design/main'
@@ -103,51 +105,154 @@ const TextReplacementListItem = ({
   }
   return (
     <li className='space-y-2'>
-      <input
-        className='w-full bg-cobalt'
-        type='text'
-        name='variable'
-        value={variable}
-        onChange={handleChange}
-      />
-      <select
-        className='w-full bg-cobalt'
-        value={selectedTextType}
-        onChange={e => setSelectedTextType(e.target.value as TextType)}
-      >
-        {textTypes.map(textType => (
-          <option key={textType} value={textType}>
-            {textType}
-          </option>
-        ))}
-      </select>
-      {selectedTextType === 'date' ? (
-        <select
-          className='w-full bg-cobalt'
-          name='text'
-          value={text}
-          onChange={handleChange}
-        >
-          <option>select date text option</option>
-          {dateTextOptions.map(dateTextOption => (
-            <option key={dateTextOption} value={dateTextOption}>
-              {dateTextOption}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <textarea
-          className='w-full bg-cobalt'
-          name='text'
-          value={text}
-          onChange={handleChange}
-        />
-      )}
+      <Disclosure>
+        {({ open }) => (
+          <>
+            <Disclosure.Button
+              className={classNames(
+                'flex w-full border-cb-dusty-blue p-4 text-cb-yellow hover:text-cb-yellow/75',
+                open && 'border-b'
+              )}
+            >
+              <span className='flex-grow text-start'>{variable}</span>
+              <ChevronRightIcon
+                className={classNames(
+                  'h-6 w-6 transition-transform',
+                  open ? 'rotate-90 transform' : ''
+                )}
+              />
+            </Disclosure.Button>
+            <Disclosure.Panel>
+              <input
+                className='w-full bg-cobalt'
+                type='text'
+                name='variable'
+                value={variable}
+                onChange={handleChange}
+              />
+              <select
+                className='w-full bg-cobalt'
+                value={selectedTextType}
+                onChange={e => setSelectedTextType(e.target.value as TextType)}
+              >
+                {textTypes.map(textType => (
+                  <option key={textType} value={textType}>
+                    {textType}
+                  </option>
+                ))}
+              </select>
+              {selectedTextType === 'date' ? (
+                <select
+                  className='w-full bg-cobalt'
+                  name='text'
+                  value={text}
+                  onChange={handleChange}
+                >
+                  <option>select date text option</option>
+                  {dateTextOptions.map(dateTextOption => (
+                    <option key={dateTextOption} value={dateTextOption}>
+                      {dateTextOption}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <textarea
+                  className='w-full bg-cobalt'
+                  name='text'
+                  value={text}
+                  onChange={handleChange}
+                />
+              )}
+            </Disclosure.Panel>
+          </>
+        )}
+      </Disclosure>
     </li>
   )
 }
 
-const Snippet: NextPage = () => {
+function TextReplacementModal({
+  id,
+  isTextReplacementModalOpen,
+  setIsTextReplacementModalOpen,
+  textReplacements,
+  setTextReplacements,
+  savedSnippet,
+  updateSnippet,
+}: {
+  id: string
+  isTextReplacementModalOpen: boolean
+  setIsTextReplacementModalOpen: Dispatch<SetStateAction<boolean>>
+  textReplacements: TextReplacement[]
+  setTextReplacements: (textReplacements: TextReplacement[]) => void
+  savedSnippet: Snippet & { textReplacements: TextReplacement[] }
+  updateSnippet: (
+    snippet: Snippet & { textReplacements: TextReplacement[] }
+  ) => void
+  snippet: string
+}) {
+  return (
+    <Modal
+      isOpen={isTextReplacementModalOpen}
+      setIsOpen={setIsTextReplacementModalOpen}
+      title='text replacements'
+      panelClassName='flex-grow flex flex-col'
+      outerPanelClassName='h-full'
+      innerPanelClassName='flex-grow flex flex-col'
+    >
+      <div className='flex-grow'>
+        {textReplacements?.length > 0 ? (
+          <ul className='divide-y divide-cb-dusty-blue bg-cb-blue'>
+            {[...textReplacements].map((textReplacement, index) => (
+              <TextReplacementListItem
+                key={index}
+                index={index}
+                textReplacement={textReplacement}
+                textReplacements={textReplacements}
+                setTextReplacements={setTextReplacements}
+              />
+            ))}
+          </ul>
+        ) : (
+          <p>you have no text replacements</p>
+        )}
+      </div>
+      <Button
+        onClick={() => {
+          setTextReplacements([
+            ...textReplacements,
+            {
+              id: '',
+              variable: '$new',
+              text: '',
+              snippetId: id,
+            },
+          ])
+        }}
+      >
+        <PlusIcon className='mx-auto block h-6 w-6' />
+      </Button>
+      <Button
+        className='disabled:pointer-events-none disabled:opacity-25'
+        onClick={() => {
+          updateSnippet({
+            ...savedSnippet,
+            // id: id,
+            // name: name as string,
+            // snippet: snippet as string,
+            // author: session?.user?.name as string,
+            textReplacements,
+          })
+        }}
+        disabled={arrayEquals(textReplacements, savedSnippet?.textReplacements)}
+      >
+        <ArrowDownOnSquareIcon className='mx-auto block h-6 w-6' />
+      </Button>
+    </Modal>
+  )
+}
+
+export default function Snippet() {
   const [showPreview, setShowPreview] = useState(false)
   const [isTextReplacementModalOpen, setIsTextReplacementModalOpen] =
     useState(false)
@@ -310,64 +415,20 @@ const Snippet: NextPage = () => {
               </Button>
             </div>
           </Modal>
-          <Modal
-            isOpen={isTextReplacementModalOpen}
-            setIsOpen={setIsTextReplacementModalOpen}
-            title='text replacements'
-          >
-            {textReplacements?.length > 0 ? (
-              <ul className='space-y-3'>
-                {textReplacements.map((textReplacement, index) => (
-                  <TextReplacementListItem
-                    key={index}
-                    index={index}
-                    textReplacement={textReplacement}
-                    textReplacements={textReplacements}
-                    setTextReplacements={setTextReplacements}
-                  />
-                ))}
-              </ul>
-            ) : (
-              <p>you have no text replacements</p>
-            )}
-            <Button
-              onClick={() => {
-                setTextReplacements([
-                  ...textReplacements,
-                  {
-                    id: '',
-                    variable: '',
-                    text: '',
-                    snippetId: id as string,
-                  },
-                ])
-              }}
-            >
-              <PlusIcon className='mx-auto block h-6 w-6' />
-            </Button>
-            <Button
-              className='disabled:pointer-events-none disabled:opacity-25'
-              onClick={() => {
-                updateSnippet({
-                  id: id as string,
-                  name: name as string,
-                  snippet: snippet as string,
-                  author: session?.user?.name as string,
-                  textReplacements,
-                })
-              }}
-              disabled={arrayEquals(
-                textReplacements,
-                savedSnippet?.textReplacements
-              )}
-            >
-              <ArrowDownOnSquareIcon className='mx-auto block h-6 w-6' />
-            </Button>
-          </Modal>
+          {savedSnippet && snippet && (
+            <TextReplacementModal
+              id={id as string}
+              isTextReplacementModalOpen={isTextReplacementModalOpen}
+              setIsTextReplacementModalOpen={setIsTextReplacementModalOpen}
+              textReplacements={textReplacements}
+              setTextReplacements={setTextReplacements}
+              savedSnippet={savedSnippet}
+              updateSnippet={updateSnippet}
+              snippet={snippet as string}
+            />
+          )}
         </>
       )}
     </Page>
   )
 }
-
-export default Snippet
