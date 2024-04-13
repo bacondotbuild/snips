@@ -118,7 +118,7 @@ export const snippetsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const currentUser = ctx.session.user.name
 
-      const noteToBeUpdated = await ctx.prisma.snippet.findFirst({
+      const snippetToBeUpdated = await ctx.prisma.snippet.findFirst({
         where: {
           id: input.id ?? '',
         },
@@ -127,12 +127,45 @@ export const snippetsRouter = createTRPCRouter({
         },
       })
 
-      if (input.id && noteToBeUpdated?.author !== currentUser) {
+      if (input.id && snippetToBeUpdated?.author !== currentUser) {
         return null
       }
 
       try {
         return await ctx.prisma.snippet.delete({
+          where: {
+            id: input?.id ?? '',
+          },
+        })
+      } catch (error) {
+        console.log(error)
+      }
+    }),
+  deleteTextReplacement: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const currentUser = ctx.session.user.name
+
+      // TODO
+      // const relatedSnippet = await ctx.prisma.snippet.findFirst({
+      //   where: {
+      //     id: input.id ?? '',
+      //   },
+      //   select: {
+      //     author: true,
+      //   },
+      // })
+
+      // if (input.id && relatedSnippet?.author !== currentUser) {
+      //   return null
+      // }
+
+      try {
+        return await ctx.prisma.textReplacement.delete({
           where: {
             id: input?.id ?? '',
           },

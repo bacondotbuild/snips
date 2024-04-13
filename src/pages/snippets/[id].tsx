@@ -87,6 +87,13 @@ const TextReplacementListItem = ({
   textReplacements: TextReplacement[]
   setTextReplacements: (textReplacements: TextReplacement[]) => void
 }) => {
+  const ctx = api.useContext()
+  const { mutate: deleteTextReplacement } =
+    api.snippets.deleteTextReplacement.useMutation({
+      onSuccess: () => {
+        void ctx.snippets.get.invalidate({ id: textReplacement.snippetId })
+      },
+    })
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const { variable, text } = textReplacement
   const [selectedTextType, setSelectedTextType] = useState<TextType>(() =>
@@ -107,7 +114,7 @@ const TextReplacementListItem = ({
   return (
     <li className='space-y-2'>
       <Disclosure>
-        {({ open }) => (
+        {({ open, close }) => (
           <>
             <Disclosure.Button
               className={classNames(
@@ -173,34 +180,39 @@ const TextReplacementListItem = ({
                 <TrashIcon className='mx-auto block h-6 w-6' />
               </Button>
             </Disclosure.Panel>
+            <Modal
+              isOpen={isConfirmModalOpen}
+              setIsOpen={setIsConfirmModalOpen}
+              title='are you sure you want to delete?'
+            >
+              <div className='flex space-x-4'>
+                <Button
+                  onClick={() => {
+                    // const newTextReplacements = [...textReplacements]
+                    // // delete item by index
+                    // newTextReplacements.splice(index, 1)
+                    // setTextReplacements(newTextReplacements)
+                    deleteTextReplacement({
+                      id: textReplacement.id,
+                    })
+                    setIsConfirmModalOpen(false)
+                    close()
+                  }}
+                >
+                  yes
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsConfirmModalOpen(false)
+                  }}
+                >
+                  no
+                </Button>
+              </div>
+            </Modal>
           </>
         )}
       </Disclosure>
-      <Modal
-        isOpen={isConfirmModalOpen}
-        setIsOpen={setIsConfirmModalOpen}
-        title='are you sure you want to delete?'
-      >
-        <div className='flex space-x-4'>
-          <Button
-            onClick={() => {
-              const newTextReplacements = [...textReplacements]
-              // delete item by index
-              newTextReplacements.splice(index, 1)
-              setTextReplacements(newTextReplacements)
-            }}
-          >
-            yes
-          </Button>
-          <Button
-            onClick={() => {
-              setIsConfirmModalOpen(false)
-            }}
-          >
-            no
-          </Button>
-        </div>
-      </Modal>
     </li>
   )
 }
