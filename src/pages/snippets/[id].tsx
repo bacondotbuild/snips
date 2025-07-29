@@ -26,6 +26,7 @@ import nextSunday from 'date-fns/nextSunday'
 import { toast } from 'react-toastify'
 import { Disclosure } from '@headlessui/react'
 import classNames from 'classnames'
+import { useCopyToClipboard } from '@uidotdev/usehooks'
 
 import Button from '@/components/design/button'
 import Main from '@/components/design/main'
@@ -34,7 +35,6 @@ import Modal from '@/components/modal'
 import Footer, { FooterListItem } from '@/components/design/footer'
 import { api } from '@/lib/api'
 import useForm from '@/lib/useForm'
-import copyToClipboard from '@/lib/copyToClipboard'
 
 function arrayEquals(a: unknown, b: unknown) {
   const isEqual =
@@ -299,6 +299,7 @@ function TextReplacementModal({
 }
 
 export default function Snippet() {
+  const [copiedText, copyToClipboard] = useCopyToClipboard()
   const [showPreview, setShowPreview] = useState(false)
   const [isTextReplacementModalOpen, setIsTextReplacementModalOpen] =
     useState(false)
@@ -423,7 +424,7 @@ export default function Snippet() {
 
             <FooterListItem
               onClick={() => {
-                copyToClipboard(snippetWithReplacements as string)
+                void copyToClipboard(snippetWithReplacements as string)
                 toast.success('copied to clipboard')
               }}
             >
